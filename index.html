@@ -93,7 +93,6 @@
             cursor: not-allowed;
         }
         
-        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -108,7 +107,6 @@
             background: rgba(75, 85, 99, 0.5);
         }
         
-        /* Toast Animations */
         .toast-enter {
             transform: translateX(100%);
             opacity: 0;
@@ -149,15 +147,13 @@
 
     <main class="w-full max-w-3xl glass-panel rounded-2xl p-6 sm:p-10 relative overflow-hidden">
         
-        <!-- Header Info -->
         <div class="text-center mb-8">
             <h2 class="text-2xl font-semibold mb-2">Get Your Access Key</h2>
             <p class="text-slate-600 dark:text-gray-400 text-sm">
-                Complete the 2 required tasks below to generate your unique, cryptographically secure access key.
+                Complete the 2 required tasks below to generate your unique access key.
             </p>
         </div>
 
-        <!-- Progress Bar -->
         <div class="mb-8">
             <div class="flex justify-between text-sm font-medium mb-2">
                 <span>Progress</span>
@@ -168,6 +164,7 @@
             </div>
         </div>
 
+        <!-- Task Section -->
         <div id="tasksSection" class="space-y-6">
             <!-- Task 1 -->
             <div class="glass-panel p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -217,7 +214,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-lg font-medium animate-pulse">Generating secure key...</p>
+            <p class="text-lg font-medium animate-pulse">Fetching secure key...</p>
         </div>
 
         <div id="resultSection" class="hidden mt-8">
@@ -234,7 +231,7 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row justify-center gap-3 mb-6">
+                <div class="flex flex-col sm:flex-row justify-center gap-3 mb-2">
                     <button id="btnCopyKey" class="flex items-center justify-center gap-2 px-4 py-2 glass-button rounded-lg font-medium">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                         Copy Key
@@ -242,12 +239,6 @@
                     <button id="btnDownloadKey" class="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         Download key.txt
-                    </button>
-                </div>
-                
-                <div class="mt-6">
-                     <button id="btnReset" class="text-sm text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-white transition-colors underline decoration-dotted">
-                        Generate Another Key
                     </button>
                 </div>
             </div>
@@ -261,32 +252,26 @@
             </div>
             
             <div id="historyList" class="space-y-3 max-h-60 overflow-y-auto pr-2">
-                <!-- History items will be injected here via JS -->
                 <p id="emptyHistoryMsg" class="text-center text-slate-500 dark:text-gray-400 py-4 italic">
-                    No keys generated yet.
+                    No active keys generated yet.
                 </p>
             </div>
         </div>
     </section>
 
-    <!-- Toast Notification Container -->
+    <!-- Toast Container -->
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
 
     <script>
-        /**
-         * Application Configuration
-         * Modify these constants to customize the app's behavior.
-         */
         const CONFIG = {
             TASK1_URL: 'https://example.com/sponsor-1',
             TASK2_URL: 'https://example.com/sponsor-2',
             KEYS_URL: 'https://raw.githubusercontent.com/gaphop123/Kg/main/key.txt',
-            VERIFY_DELAY: 1500, // Simulated delay for verification in ms
-            TASK_TIMER_SECONDS: 60, // Wait 60 seconds before allowing completion
-            EXPIRATION_HOURS: 24 // Keys expire and are permanently deleted after 24 hours
+            VERIFY_DELAY: 1500,
+            TASK_TIMER_SECONDS: 60,
+            EXPIRATION_HOURS: 24 // 24-Hour lifetime for active keys
         };
 
-        // State Management
         const state = {
             task1Status: 'pending',
             task2Status: 'pending',
@@ -296,7 +281,6 @@
             task2Timer: null
         };
 
-        // DOM Elements
         const els = {
             themeToggle: document.getElementById('themeToggle'),
             sunIcon: document.getElementById('sunIcon'),
@@ -320,7 +304,6 @@
             generatedKeyDisplay: document.getElementById('generatedKeyDisplay'),
             btnCopyKey: document.getElementById('btnCopyKey'),
             btnDownloadKey: document.getElementById('btnDownloadKey'),
-            btnReset: document.getElementById('btnReset'),
             
             resultTitle: document.getElementById('resultTitle'),
             existingKeyWarning: document.getElementById('existingKeyWarning'),
@@ -331,9 +314,6 @@
             toastContainer: document.getElementById('toastContainer')
         };
 
-        /**
-         * Escapes HTML to prevent XSS (Utility)
-         */
         function escapeHTML(str) {
             const div = document.createElement('div');
             div.textContent = str;
@@ -345,13 +325,10 @@
             const bgColor = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-blue-500');
             
             toast.className = `toast-enter flex items-center p-4 mb-2 text-white rounded-lg shadow-lg ${bgColor} glass-panel border-none`;
-            toast.innerHTML = `
-                <div class="ml-3 text-sm font-normal">${escapeHTML(message)}</div>
-            `;
+            toast.innerHTML = `<div class="ml-3 text-sm font-normal">${escapeHTML(message)}</div>`;
             
             els.toastContainer.appendChild(toast);
             
-            // Trigger animation
             requestAnimationFrame(() => {
                 toast.classList.remove('toast-enter');
                 toast.classList.add('toast-enter-active');
@@ -360,15 +337,12 @@
             setTimeout(() => {
                 toast.classList.remove('toast-enter-active');
                 toast.classList.add('toast-exit-active');
-                toast.addEventListener('transitionend', () => {
-                    toast.remove();
-                });
+                toast.addEventListener('transitionend', () => toast.remove());
             }, 3000);
         }
 
         function copyToClipboard(text, successMessage) {
             try {
-                // Using textarea fallback for maximum compatibility inside iFrames
                 const textArea = document.createElement("textarea");
                 textArea.value = text;
                 textArea.style.position = "fixed";
@@ -381,13 +355,10 @@
                 const successful = document.execCommand('copy');
                 document.body.removeChild(textArea);
                 
-                if (successful) {
-                    showToast(successMessage);
-                } else {
-                    showToast('Failed to copy', 'error');
-                }
+                if (successful) showToast(successMessage);
+                else showToast('Failed to copy', 'error');
             } catch (err) {
-                console.error('Fallback: Oops, unable to copy', err);
+                console.error('Copy failed', err);
                 showToast('Failed to copy', 'error');
             }
         }
@@ -447,11 +418,9 @@
         }
 
         function verifyTask(taskNum, btnEl, iconEl) {
-            const originalText = btnEl.textContent;
             btnEl.disabled = true;
             btnEl.innerHTML = `<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
 
-            // Simulate verification delay
             setTimeout(() => {
                 if (taskNum === 1) state.task1Status = 'completed';
                 else state.task2Status = 'completed';
@@ -476,17 +445,14 @@
 
             setTimeout(async () => {
                 try {
-                    // Fetch keys from GitHub raw text file
                     const response = await fetch(CONFIG.KEYS_URL);
-                    if (!response.ok) throw new Error('Failed to fetch keys from source.');
+                    if (!response.ok) throw new Error('Failed to fetch keys.');
                     
                     const text = await response.text();
-                    // Split the text file into an array of lines, remove empty spaces and blank lines
                     const keysList = text.split('\n').map(k => k.trim()).filter(k => k.length > 0);
                     
-                    if (keysList.length === 0) throw new Error('No keys found in the list');
+                    if (keysList.length === 0) throw new Error('No keys available.');
                     
-                    // Pick a random key from the array
                     const randomIndex = Math.floor(Math.random() * keysList.length);
                     state.currentKey = keysList[randomIndex];
                     
@@ -523,7 +489,6 @@
             state.task2Status = 'pending';
             state.currentKey = null;
 
-            // Reset UI
             els.progressText.textContent = `0 / 2 Tasks`;
             els.progressBar.style.width = `0%`;
             
@@ -531,7 +496,6 @@
             els.resultSection.classList.add('hidden');
             els.tasksSection.classList.remove('hidden');
             
-            // Reset Task 1
             els.btnStartTask1.classList.remove('hidden');
             els.btnVerifyTask1.classList.add('hidden');
             els.btnVerifyTask1.disabled = false;
@@ -540,7 +504,6 @@
             els.task1Icon.className = "w-10 h-10 rounded-full bg-slate-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 transition-colors text-slate-500 dark:text-gray-400";
             els.task1Icon.innerHTML = `<span class="text-lg font-bold">1</span>`;
             
-            // Reset Task 2
             els.btnStartTask2.classList.remove('hidden');
             els.btnVerifyTask2.classList.add('hidden');
             els.btnVerifyTask2.disabled = false;
@@ -563,44 +526,31 @@
             renderHistory();
         }
 
-        /**
-         * Checks if a valid non-expired key exists in history on page load.
-         * If found, hides tasks and displays the existing active key directly.
-         */
         function checkExistingActiveKey() {
             cleanExpiredHistory();
             if (state.history.length > 0) {
                 const activeKeyObj = state.history[0];
                 state.currentKey = activeKeyObj.key;
                 
-                // Hide tasks section
                 els.tasksSection.classList.add('hidden');
                 
-                // Display active key section
                 els.generatedKeyDisplay.textContent = state.currentKey;
                 els.resultTitle.innerHTML = `<svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Active Key Found!`;
                 els.resultTitle.className = "text-amber-600 dark:text-amber-400 font-semibold mb-2 flex items-center justify-center gap-2";
                 
                 const remainingText = getRemainingTimeString(activeKeyObj.timestamp);
-                els.existingKeyWarning.textContent = `You already have an active key (${remainingText}). Task section is hidden until your key expires.`;
+                els.existingKeyWarning.textContent = `You already have an active key (${remainingText}). Tasks are hidden until your key expires after 24 hours.`;
                 els.existingKeyWarning.classList.remove('hidden');
-                
-                // Hide reset button while an active key is present
-                els.btnReset.classList.add('hidden');
                 
                 els.resultSection.classList.remove('hidden');
             }
         }
 
-        /**
-         * Cleans out keys older than 24 hours from the initial generation timestamp.
-         */
         function cleanExpiredHistory() {
             const now = Date.now();
             const maxAge = CONFIG.EXPIRATION_HOURS * 60 * 60 * 1000;
             const initialLength = state.history.length;
             
-            // Keep only keys created within the last 24 hours
             state.history = state.history.filter(item => {
                 const itemTime = new Date(item.timestamp).getTime();
                 return (now - itemTime) < maxAge;
@@ -611,9 +561,6 @@
             }
         }
 
-        /**
-         * Formats remaining time before 24h key expiration
-         */
         function getRemainingTimeString(timestamp) {
             const now = Date.now();
             const maxAge = CONFIG.EXPIRATION_HOURS * 60 * 60 * 1000;
@@ -632,9 +579,8 @@
                 key: key,
                 timestamp: new Date().toISOString()
             };
-            state.history.unshift(entry); // Add to top
+            state.history.unshift(entry);
             
-            // Keep only last 50 entries to prevent localStorage overflow
             if(state.history.length > 50) state.history.pop();
             
             localStorage.setItem('keygen_history', JSON.stringify(state.history));
@@ -674,7 +620,6 @@
         }
 
         function initTheme() {
-            // Check local storage or system preference
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark');
                 els.sunIcon.classList.remove('hidden');
@@ -700,47 +645,35 @@
             }
         });
 
-        // Task 1 Events
         els.btnStartTask1.addEventListener('click', () => {
             window.open(CONFIG.TASK1_URL, '_blank');
             markTaskClicked(1);
         });
-        els.btnVerifyTask1.addEventListener('click', () => {
-            verifyTask(1, els.btnVerifyTask1, els.task1Icon);
-        });
+        els.btnVerifyTask1.addEventListener('click', () => verifyTask(1, els.btnVerifyTask1, els.task1Icon));
 
-        // Task 2 Events
         els.btnStartTask2.addEventListener('click', () => {
             window.open(CONFIG.TASK2_URL, '_blank');
             markTaskClicked(2);
         });
-        els.btnVerifyTask2.addEventListener('click', () => {
-            verifyTask(2, els.btnVerifyTask2, els.task2Icon);
-        });
+        els.btnVerifyTask2.addEventListener('click', () => verifyTask(2, els.btnVerifyTask2, els.task2Icon));
 
-        // Result Events
         els.btnCopyKey.addEventListener('click', () => copyToClipboard(state.currentKey, 'Key copied to clipboard!'));
         els.btnDownloadKey.addEventListener('click', () => {
-            const textContent = `Generated Key: ${state.currentKey}\nTimestamp: ${new Date().toISOString()}`;
-            downloadTextFile('keyapi.txt', textContent);
+            const textContent = `Key: ${state.currentKey}\nTimestamp: ${new Date().toISOString()}`;
+            downloadTextFile('key.txt', textContent);
         });
-        els.btnReset.addEventListener('click', resetApp);
 
-        // Init App
         window.onload = () => {
             initTheme();
             loadHistory();
             checkExistingActiveKey();
 
-            // Automatically check and prune expired keys every 30 seconds
             setInterval(() => {
                 cleanExpiredHistory();
                 renderHistory();
 
-                // If active key expired, show tasks again automatically
                 if (state.history.length === 0 && !els.resultSection.classList.contains('hidden') && els.tasksSection.classList.contains('hidden')) {
                     resetApp();
-                    els.btnReset.classList.remove('hidden');
                     showToast('Your key has expired. You can now complete tasks for a new key.', 'info');
                 }
             }, 30000);
